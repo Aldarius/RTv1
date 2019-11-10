@@ -6,20 +6,22 @@
 #    By: lminta <lminta@student.42.fr>              +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: Invalid date        by                   #+#    #+#              #
-#    Updated: 2019/09/13 22:55:23 by lminta           ###   ########.fr        #
+#    Updated: 2019/10/22 20:15:30 by lminta           ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
 
 NAME = rtv1
 
-FLAGS = -g
+FLAGS = -Wall -Wextra -Werror #-g
 CC = gcc
 LIBRARIES = $(GUI_LIB) -lft -L$(LIBFT_DIRECTORY)  -lsdl -L$(LIBSDL_DIRECTORY)  -lm -framework OpenCL  -lvect -L$(LIBVECT) -lgnl -L$(LIBGNL) -lcl -L$(LIBCL)
-INCLUDES = $(GUI_INC) -I$(HEADERS_DIRECTORY) -I$(LIBFT_HEADERS)  -I$(SDL_HEADERS) -I$(LIBMATH_HEADERS) -I$(LIBSDL_HEADERS) -I$(LIBVECT)include/ -Isrcs/cl_error/ -I$(LIBGNL)include/ -I$(LIBCL)include/
+INCLUDES = $(GUI_INC) -I$(HEADERS_DIRECTORY) -I$(LIBFT_HEADERS)  -I$(SDL_HEADERS) -I$(LIBMATH_HEADERS) -I$(LIBSDL_HEADERS) -I$(LIBVECT)includes/ -Isrcs/cl_error/ -I$(LIBGNL)includes/ -I$(LIBCL)includes/
 
-GUI_LIB = -L./gui/build/src -lKiWi -L/Users/lminta/.brew/Cellar/sdl2_ttf/2.0.15/lib -lSDL2_ttf
-GUI_INC = -I./include/SDL2 -I./gui/KiWi/src -I./gui/inc -I/Users/lminta/.brew/Cellar/sdl2_ttf/2.0.15/include/SDL2
+GUI_LIB = -L./gui/build/src -lKiWi $(shell pkg-config --libs sdl2_ttf) $(shell pkg-config --libs sdl2_image)
+GUI_INC = -I./include/SDL2 -I./gui/KiWi/src -I./gui/inc $(shell pkg-config --cflags sdl2_ttf) $(shell pkg-config --cflags sdl2_image)
+DIR_KiWi = ./gui/build/src/
+LIB_KiWi = $(DIR_KiWi)/libKiWi.dylib
 
 LIBFT = $(LIBFT_DIRECTORY)libft.a
 LIBFT_HEADERS = $(LIBFT_DIRECTORY)includes/
@@ -36,7 +38,6 @@ LIBSDL_DIRECTORY = libs/libsdl/
 
 
 SDL_HEADERS = include/
-
 LIBSDL = $(LIBSDL_DIRECTORY)libsdl.a
 LIBSDL_HEADERS = $(LIBSDL_DIRECTORY)includes/
 
@@ -61,13 +62,35 @@ LIB_LIST =	libSDL2.a\
 
 SRCS_DIRECTORY = ./srcs/
 
+RMRF = gui/src/gui_main.o\
+		gui/src/start_screen.o\
+		gui/src/surf_tex.o\
+		gui/src/scene_select.o\
+		gui/src/main_screen.o\
+		gui/src/obj_select.o
+
 SRCS_LIST = main.c\
 			cl_lib/gpu_init.c\
 			textures.c\
-			add_object.c parse.c\
+			parse_cam.c\
+			parse_main_triangle.c\
+			parse_sphere_plane.c\
+			parse_cone_cyl.c\
 			cl_float3_manage.c\
+			cl_float3_rotate.c\
+			keys.c\
+			camera.c\
+			const.c\
+			help_fun.c\
+			init_scene.c\
+			render.c\
 			../gui/src/gui_main.c\
-			../gui/src/start_screen.c
+			../gui/src/start_screen.c\
+			../gui/src/surf_tex.c\
+			../gui/src/scene_select.c\
+			../gui/src/main_screen.c\
+			../gui/src/obj_select.c\
+			valid_file.c
 
 OBJS_DIRECTORY = objects/
 OBJS_LIST = $(patsubst %.c, %.o, $(SRCS_LIST))
@@ -113,7 +136,7 @@ endif
 all: $(MAKES) $(NAME)
 
 
-$(NAME): $(LIBFT)  $(LIBSDL) $(LIBCL) $(LIBGNL)  $(LIBVECT) $(OBJS_DIRECTORY) $(OBJS) $(HEADERS)
+$(NAME): $(LIB_KiWi) $(LIBFT)  $(LIBSDL) $(LIBCL) $(LIBGNL)  $(LIBVECT) $(OBJS_DIRECTORY) $(OBJS) $(HEADERS)
 	@$(CC) $(FLAGS) $(LIBSDL) $(INCLUDES) $(OBJS) $(SDL_CFLAGS) $(SDL_LDFLAGS) -o $(NAME) $(LIBRARIES)
 	@echo "$(CLEAR_LINE)[`expr $(CURRENT_FILES) '*' 100 / $(TOTAL_FILES)`%] $(COL_BLUE)[$(NAME)] $(COL_GREEN)Finished compilation. Output file : $(COL_VIOLET)$(PWD)/$(NAME)$(COL_END)"
 
@@ -123,7 +146,6 @@ $(MAKES):
 	@$(MAKE) -sC $(LIBVECT)
 	@$(MAKE) -sC $(LIBGNL)
 	@$(MAKE) -sC $(LIBCL)
-
 
 $(OBJS_DIRECTORY):
 	@mkdir -p $(OBJS_DIRECTORY)
@@ -148,6 +170,10 @@ sdl:
 this:
 	@rm -rf $(OBJS_DIRECTORY) && make;
 
+$(LIB_KiWi):
+	@cmake -S ./gui/KiWi -B ./gui/build
+	@$(MAKE) -sC $(DIR_KiWi)
+
 $(SDL_LIBS):
 	cd SDL2; ./configure --prefix=$(DIRECTORY); make;
 	$(MAKE) -sC $(SDL_MAKE) install
@@ -160,9 +186,16 @@ $(LIBSDL):
 	@echo "$(NAME): $(GREEN)Creating $(LIBSDL)...$(RESET)"
 	@$(MAKE) -sC $(LIBSDL_DIRECTORY)
 
+norm:
+	norminette gui/inc gui/src includes srcs libs/libcl libs/libft libs/libgnl libs/libsdl/includes libs/libsdl/srcs/ libs/libvect
+
 clean:
-	@$(MAKE) -sC $(LIBFT_DIRECTORY) clean
-	@$(MAKE) -sC $(LIBSDL_DIRECTORY) clean
+	@rm -rf ./gui/build $(RMRF)
+	$(MAKE) -sC $(LIBFT_DIRECTORY)	clean
+	$(MAKE) -sC $(LIBSDL_DIRECTORY) clean
+	$(MAKE) -sC $(LIBVECT)	clean
+	$(MAKE) -sC $(LIBCL)	clean
+	$(MAKE) -sC $(LIBGNL) 	clean
 	@rm -rf $(OBJS_DIRECTORY)
 	@echo "$(NAME): $(RED)$(OBJECTS_DIRECTORY) was deleted$(RESET)"
 	@echo "$(NAME): $(RED)object files were deleted$(RESET)"
@@ -182,6 +215,9 @@ fclean: clean
 	@echo "$(NAME): $(RED)$(NAME) was deleted$(RESET)"
 	@$(MAKE) -sC $(LIBFT_DIRECTORY) fclean
 	@$(MAKE) -sC $(LIBSDL_DIRECTORY) fclean
+	@$(MAKE) -sC $(LIBVECT) fclean
+	@$(MAKE) -sC $(LIBCL) fclean
+	@$(MAKE) -sC $(LIBGNL) fclean
 	#@rm -f $(DIRECTORY)/bin/sdl2-config
 	#@rm -f $(DIRECTORY)/lib/libSDL2.la
 	#@rm -f $(DIRECTORY)/lib/libSDL2main.la

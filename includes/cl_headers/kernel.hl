@@ -19,7 +19,7 @@ typedef struct s_txture
 {
 	int		width;
 	int		height;
-	int		texture[1920 * 1080];
+	int		texture[4096 * 2048];
 }				t_txture;
 
 
@@ -38,7 +38,8 @@ typedef enum e_figure
 	 SPHERE, CYLINDER, CONE, PLANE, TRIANGLE
 } t_type;
 
-typedef struct Object{
+typedef struct s_object
+{
 	float radius;
 	float3 position;
 	float3 color;
@@ -50,6 +51,7 @@ typedef struct Object{
 	float plane_d;
 	int		texture;
 	float3	vertices[3];
+	int		is_visible;
 } t_obj;
 
 typedef struct 			s_cam

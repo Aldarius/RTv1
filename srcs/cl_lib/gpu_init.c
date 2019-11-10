@@ -1,28 +1,23 @@
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   gpu_init.c                                         :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: jblack-b <jblack-b@student.42.fr>          +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2019/10/11 15:35:41 by lminta            #+#    #+#             */
+/*   Updated: 2019/10/22 17:28:50 by jblack-b         ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
+
 #include "rtv1.h"
 
-int print_error(t_gpu *gpu)
-{
-	size_t  len;
-	char    *buffer;
-
-	if (gpu->err != CL_SUCCESS)
-	{
-		buffer = ft_strnew(99999);
-		clGetProgramBuildInfo(gpu->program, gpu->device_id, CL_PROGRAM_BUILD_LOG, 100000, buffer, &len);
-		printf("%s\n", buffer);
-		ft_strdel(&buffer);
-		return EXIT_FAILURE;
-	}
-	return (0);
-}
-
-
-void release_gpu(t_gpu *gpu)
+void	release_gpu(t_gpu *gpu)
 {
 	clReleaseProgram(gpu->program);
 	clReleaseKernel(gpu->kernel);
 	clReleaseCommandQueue(gpu->commands);
 	clReleaseContext(gpu->context);
-	clReleaseMemObject(gpu->cl_bufferOut);
-	clReleaseMemObject(gpu->cl_cpuSpheres);
+	clReleaseMemObject(gpu->cl_buffer_out);
+	clReleaseMemObject(gpu->cl_cpu_spheres);
 }

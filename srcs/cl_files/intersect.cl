@@ -1,19 +1,25 @@
 #include "options.cl"
 
+
 static float ft_solve(float a, float b, float c)
 {
 	float  disc = b * b - 4*a*c;
    	float temp = 1/(2*a);
-	float res;
+	float res1;
+	float res2;
 
+	// if (fabs(a * 0.5f) < EPSILON)
+	// 	return (0.0f);
  	if (disc < 0.0f) 
 		return 0.0f;
 	
 	disc = sqrt(disc);
-	if ((res = (-b - disc) * temp) > EPSILON)
-		return res;
-    // if ((res = (-b + disc) * temp) > EPSILON)
-	// 	return res;
+	res1 = (-b - disc) * temp;
+	res2 = (-b + disc) * temp;
+	if ((res1) > EPSILON && res2 > EPSILON)
+		return res1 <= res2 ? res1 : res2;
+	if (res1 > EPSILON || res2 > EPSILON)
+		return res1 <= res2 ? res2 : res1;
 	return(0.f);
 }
 
@@ -87,14 +93,16 @@ static int inside_triangle(const t_obj* triangle, float3 collision)
 	return(0);
 }
 
-static float		intersect_triangle(const t_obj* triangle, const t_ray *  ray)
+static float		intersect_triangle(const t_obj* triangle,  t_ray *  ray)
 {
 	float	a;
 	float	b;
+
+	
 	a = dot(triangle->v, ray->dir);
 	if (fabs(a) < EPSILON)
 		return (0);
-	b = -(dot(ray->origin - triangle->position, triangle->v)) / a;
+	b = -(dot(ray->origin - triangle->vertices[1], triangle->v)) / a;
 	if (!inside_triangle(triangle, ray->origin + ray->dir * b))
 		return (0);
 	return (b < EPSILON) ? 0 : b;
